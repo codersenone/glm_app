@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>地址编辑页面</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src='../js/axios.min.js'></script>
+		<script src="../js/config.js"></script>
+		<style>
+			.content{
+				margin-top: 100px;
+				
+			}
+			.content>p{
+				margin-top: 50px;
+				font-size: 18px;
+			}
+			input{
+				width: 200px!important;
+				position: absolute;
+				left: 30%;
+			}
+			textarea{
+				width: 60%;
+				position: absolute;
+				left: 30%;
+				vertical-align: middle!important;
+			}
+			button{
+				background-color: red;
+				display: block;
+				width: 40%;
+				color: white;
+				font-size: 18px;
+				margin: 120px auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">地址信息编辑</h1>
+			</header>
+			<div class="content">
+				<p><span>收件人：</span><input type="text" v-model="address.name" placeholder="请输入收件人名字"></p>
+				<p><span>联系号码：</span><input oninput="value=value.replace(/[^\d]/g,'')" type="tel" v-model="address.phone" placeholder="请输入联系号码"></p>
+				<p><span>详细地址：</span>
+					<textarea rows="3"  v-model="address.addr" placeholder="请输入详细收件地址"></textarea>
+				</p>
+				<p><button @click="doPost()">保存地址信息</button></p>
+				
+			</div>	
+		</div>
+		<script>
+			// 当前页面关闭时向父组件发送更新通知,更新修改完的地址列表
+			mui.init({  
+			     beforeback: function() {  
+				     var list = plus.webview.currentWebview().opener();  
+				     mui.fire(list, 'refresh');  
+				     return true;  
+			     }  
+			 });
+			var addEdit = new Vue({
+				el:'#app',
+				data(){
+					return{
+						uid:'',
+						flag:0,
+						address:{
+							aid:0,
+							name:'',
+							phone:'',
+							addr:'',
+						}
+					}
+				},
+				created() {
+					this.uid = localStorage.getItem('uid')
+				},
+				methods:{
+					doPost(){
+						if(this.address.name!=''&&this.address.phone!=''&&this.address.addr!=''){
+							axios({
+								method:'post',
+								url:url+'/updateAddress',
+								data:{
+									uid:this.uid,
+									flag:this.flag,
+									address:this.address
+								}
+							})
+							mui.toast("保存成功！")
+							mui.back()
+						}else{
+							mui.init()
+							mui.alert("请先填写完成全部信息再保存！！")
+						}
+					}
+				},
+				mounted() {
+					let _this = this
+					mui.plusReady(function(){
+					    var self = plus.webview.currentWebview();
+						_this.flag = self.flag
+						if(self.flag==0){
+							_this.address = self.item
+						}
+					});
+				}
+			})
+		</script>
+	</body>
+</html>

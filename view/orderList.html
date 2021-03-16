@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>订单列表</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<link href="../css/icons-extra.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/config.js"></script>
+		<style type="text/css">
+			[v-cloak]{
+				display:none;
+			}
+			*{
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+			.content{
+				margin-top: 55px;
+			}
+			
+			.labelList>li{
+				padding: 10px 0 10px 0;
+				text-align: center;
+				border-radius: 20px;
+				width: 24%;
+				display: inline-block;
+			}
+			.select{
+				background-color: red;
+			}
+			.labelList{
+				padding: 0!important;
+				margin: 0!important;
+				background-color:#efeff4;
+				position: fixed;
+				top: 44px;
+				z-index: 9;
+				width: 100%;
+				height: 30px;
+				
+			}
+			.showList{
+				margin-top: 90px;
+			}
+			.li_normal{
+				list-style: none;
+				width: 100%;
+				height: 150px;
+				position: relative;
+			}
+			.time{
+				position: absolute;
+				bottom: 5px;
+				left: 10px;
+				font-size: 12px;
+				color: darkgray;
+			}
+			.price{
+				position: absolute;
+				bottom: 10px;
+				font-size: 16px;
+				color: red;
+				right: 20px;
+			}
+			.img{
+				width: 65px;
+				height: 65px;
+			}
+			.imgList{
+				width: 235px;
+				height: 70px;
+				overflow: hidden;
+				position: absolute;
+				bottom: 30px;
+			}
+			.imgList>li{
+				margin-left: 10px;
+				width: 65px;
+				height: 65px;
+				display: inline-block;
+			}
+			.totalNum{
+				position: absolute;
+				left:260px;
+				top: 50%;
+				color: darkgray;
+			}
+			.status{
+				position: absolute;
+				right:20px;
+				top: 30%;
+				color: red;
+			}
+			.noOrder{
+				margin:50% auto;
+				width: 200px;
+				height: 200px;
+				background-image: url(../img/noOrder.png);
+				background-size: 100% 100%;
+			
+			}
+			.noOrder>p{
+				text-align: center;
+				position: relative;
+				top: 170px;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<div id="app" >
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">订单列表</h1>
+			</header>
+			<div class="content">
+				<ul class="labelList">
+					<li :class="{select:status==1}" status=1>待付款</li>
+					<li :class="{select:status==2}" status=2>已付款</li>
+					<li :class="{select:status==0}" status=0>已取消</li>
+					<li :class="{select:status==3}" status=3>全部订单</li>
+				</ul>
+				<template>
+				<ul class="showList">
+					<div v-if="filterList.length!=0" >
+						<li class="li_normal mui-table-view-cell mui-media" v-for="(item,i) in filterList" @click="toDetail(item.orderId)">
+							<span class="oid" >订单编号：{{item.orderId}}</span>
+							<ul class="imgList">
+								<li v-for="img in item.goods"><img class="img" :src=url+"/images?id="+img.gid /></li>
+							</ul>
+							<span class="status">{{getStatus(item.status)}}</span>
+							<span class="totalNum" >共{{item.num}}件商品</span>
+							<span class="time" >下单时间：{{item.submitTime}}</span>
+							<span class="price" >价格：￥{{item.totalPrice}}</span>
+						</li>
+					</div>
+					<div v-else style="width: 100%; height: 100%;" >
+						<div class="noOrder">
+							<p>暂无订单</p>
+						</div>
+					</div>
+				</ul>
+				</template>
+			</div>
+		</div>
+		<script>
+			window.addEventListener('refresh', function(e) {
+			    location.reload();  
+			})
+			var orderList = new Vue({
+				el:"#app",
+				data(){
+					return{
+						status:"",
+						uid:0,
+						orderList:[],
+						filterList:[]
+					}
+				},
+				created() {
+					let _this = this
+					_this.uid = localStorage.getItem('uid')
+					mui.plusReady(function () {
+						var curr = plus.webview.currentWebview()
+						_this.status = curr.status
+					})
+				},
+				computed:{
+					getStatus:function(){
+						return function(status){
+							if(status == 0){
+								return '已取消'
+							}else if(status == 1){
+								return '待付款'
+							}else if(status == 2){
+								return '已付款'
+							}
+						}
+					}
+				},
+				methods:{
+					toDetail(oid){
+						mui.openWindow({
+							id: 'orderDetail.html',
+							url: './orderDetail.html',
+							extras:{
+								oid:oid
+							}	
+						});	
+					}
+				},
+				watch:{
+					status(nval){
+						if(nval == 3){
+							this.filterList = []
+							for(let item of this.orderList){
+								item.num = 0
+								for(let item2 of item.goods){
+									item.num += item2.num
+								}
+								this.filterList.push(item)
+							}
+						}else{
+							this.filterList = this.orderList.filter(val => val.status == nval)
+							let cpList = this.filterList.slice(0)
+							this.filterList = []
+							for(let item of cpList){
+								item.num = 0
+								for(let item2 of item.goods){
+									item.num += item2.num
+								}
+								this.filterList.push(item)
+							}
+						}
+					}
+				},
+				mounted() {
+
+					axios.get(url+'/getOrders?uid='+this.uid)
+						.then((res)=>{
+							let data = res.data
+							this.orderList = data	
+						})
+					let _this = this
+					mui('.labelList').on('tap','li',function(){
+						let status = this.getAttribute('status')
+						_this.status = status
+					})
+				}
+			})
+		</script>
+	</body>
+</html>

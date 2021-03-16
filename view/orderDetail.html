@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>订单详情</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<link href="../css/icons-extra.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/config.js"></script>
+		<style>
+			*{
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+			.content{
+				margin-top: 55px;
+			}
+			.status{
+				width: 100%;
+				height: 50px;
+				text-align: center;
+				line-height: 50px;
+				font-size: 30px;
+				color: red;
+			}
+			.li_normal{
+				list-style: none;
+				width: 100%;
+				height: 100px;
+				position: relative;
+			}
+			.title{
+				font-size: 12px;
+				margin-left: 30px;
+				width: 60%;
+				position: absolute;
+				left: 90px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;     /* 显示2行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
+			}
+			.li_normal>img{
+				width: 80px;
+				height: 80px;
+				position: absolute;
+				left: 10px;
+				top: 50%;
+				margin-top: -40px;
+			}
+			.price{
+				position: absolute;
+				left: 120px;
+				top: 80px;
+				
+			}
+			.num{
+				position: absolute;
+				left: 300px;
+				top: 80px;
+				font-size: 12px;
+				color: darkgray;
+				vertical-align: middle;
+			}
+			.showList{
+				margin-bottom: 10px;
+				height: 250px;
+				overflow: scroll;	
+			}
+			.gray{
+				color: darkgray;
+			}
+			.pay{
+				position: fixed;
+				width: 150px;
+				background-color: red;
+				color: white;
+				bottom: 20px;
+				right: 120px;
+				border-radius: 20px;
+			}
+			.cancle{
+				position: fixed;
+				width: 100px;
+				color:red;
+				bottom: 20px;
+				right: 10px;
+				font-weight: 900;
+				border-radius: 20px;
+			}
+			.person p{
+				color: #000000;
+				font-size: 15px
+			}
+			.totalPrice{
+				display: block;
+				margin: 0 auto;
+				width: 300px;
+				text-align: center;
+				color: red;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">订单详情</h1>
+			</header>
+			<template>
+				<div class="content">
+					<span class="gray">订单号：{{order.orderId}}</span>
+					<div class="status"><span class="mui-icon mui-icon-info"></span>{{showText}}</div>
+					<div class="totalPrice">总价：{{order.totalPrice}}</div>
+					<div class="person">
+						收件信息：
+						<p>姓名：{{order.addr.name}} &nbsp;&nbsp;联系方式：{{order.addr.phone}}</p>
+						<p>详细地址：{{order.addr.address}}</p>
+					</div>
+					<span class="gray">商品列表</span>
+					<ul class="showList">
+						<li class="li_normal mui-table-view-cell mui-media" v-for="item in order.goods" @click="toDetail(item.gid)">
+							<img :src=url+'/images?id='+item.gid>
+							<div class="title">{{item.title}}</div>
+							<span class="price">￥{{item.price}}</span>
+							<span class="num">数量：{{item.num}}</span>
+						</li>
+					</ul>
+					<span class="gray">下单时间：{{order.submitTime}}</span><br>
+					<span class="gray" v-cloak v-if="order.PayTime">付款时间：{{order.PayTime}}</span><br >
+					<span class="gray" v-cloak v-if="order.CancleTime">取消订单时间：{{order.CancleTime}}</span>
+					<button @click="toPay" class="pay" v-show="order.status==1">去付款</button><button @click="toCancle" class="cancle" v-show="order.status!=0">取消订单</button>
+				</div>
+			</template>
+		</div>
+		<script>
+			mui.init({
+			     beforeback: function() {  
+				     var list = plus.webview.currentWebview().opener();  
+				     mui.fire(list, 'refresh');  
+				     return true;  
+			     }  
+			 })
+			 window.addEventListener('refresh', function(e) {
+			     location.reload();  
+			 })
+			var orderDetail = new Vue({
+				el:'#app',
+				data(){
+					return{
+						oid:'',
+						goods:[],
+						order:[]
+					}
+				},
+				watch:{
+					oid(){
+						axios.get(url+'/getOrderByOid?oid='+this.oid)
+							.then((res)=>{
+								let data = res.data
+								for(let item of data.goods){
+									axios.get(url+'/detail?id='+item.gid)
+										.then((res)=>{
+											item.price = res.data.price
+											item.title = res.data.title
+											this.goods.push(item)
+										})
+										
+								}
+								this.order = data
+								this.order.goods = this.goods
+							})
+					},
+				},
+				created() {
+					let _this = this
+					mui.plusReady(function () {
+					    var curr = plus.webview.currentWebview()
+						_this.oid = curr.oid
+					}) 
+					
+				},
+				computed:{
+					showText(){
+						if(this.order.status==1){
+							return "待付款"
+						}else if(this.order.status==2){
+							return "已付款"
+						}else if(this.order.status==0){
+							return "已取消"
+						}
+					}
+				},
+				methods:{
+					// 去商品详情
+					toDetail(id){
+						mui.openWindow({
+							url:'./detail.html',
+							id:'detail.html',
+							extras:{
+								gid:id
+							}
+						})
+					},
+					toPay(){
+						let _this = this
+						mui.openWindow({
+						    url:'./pay.html',
+						    id:'pay.html',
+							extras:{
+								oid:_this.oid
+							}
+						})
+						
+					},
+					toCancle(){
+						let _this = this
+						mui.confirm('是否取消该订单','警告',['取消','确认'],function (e) {
+							if(e.index==1){
+								mui.toast("订单已取消")
+								axios.get(url+'/cancleOrder?oid='+_this.oid)
+									.then((res)=>{
+										if(res.data.flag==1){
+											axios({
+												method:'post',
+												url:url+'/stockChange',
+												data:{
+													goods:_this.goods,
+													flag:1
+												}
+											}).then(res=>{
+												if(res.data.flag==1){
+													mui.toast("订单已取消")
+													location.reload()
+												}
+												
+											})
+											
+										}
+									})
+							}
+						},'div')
+					}
+				},
+				mounted() {
+					mui.plusReady(function () {
+					    var ws=plus.webview.currentWebview();
+					    ws.addEventListener("show", function(e){
+					    	location.reload()
+					    })
+					})
+				}
+			})
+		</script>
+	</body>
+</html>

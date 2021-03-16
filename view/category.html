@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>分类</title>
+		<script src="../js/Scrollload.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/mui.js"></script>
+		<script src="../js/config.js"></script>
+		<link href="../css/mui.min.css" />
+		<style>
+			* {
+			    margin: 0;
+			    padding: 0;
+			    box-sizing: border-box
+			}
+			.scrollload-content{
+			    list-style: none;
+			    font-size: 14px;
+				background-color: #f2f2f2;
+			}
+			
+			h1 {
+			    text-align: center;
+			    margin-bottom: 20px;
+			}
+			.scrollload-content>li{
+				height: 90px;
+				margin: 10px 0 10px 0;
+				background-color: white;
+				padding: 0px;
+			}		
+			.pro_item a{
+				display: block;
+				width: 100%;
+				height: 100%;
+				position: relative;
+				margin: 0px !important;
+			}
+			.title{
+				
+				position: absolute;
+				left: 110px;    
+			}
+			.title>p{
+				font-size: 12px;
+				color: #000000;
+				width: 90%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp: 3;     /* 显示2行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
+			}
+			.pro_icon{
+				width: 66px;
+				height: 66px;
+				margin: 12px 0 0 22px;
+			}
+			.price{
+				font-size: 15px;
+				color: red;
+				position: absolute;
+				left: 110px;
+				bottom: 0px;
+			}
+			.labs{
+				position: absolute;
+				bottom: 5px;
+				right: 10px;
+			}
+			.labs>span{
+				padding: 0px 3px 0px 3px; 
+				font-size: 12px;
+				border-radius: 5px;
+				color: #AAAAAA;
+				border: #AAAAAA 1px solid;
+				margin-left: 5px;
+			}
+			.header{
+				margin:15px;
+			}
+			.header>li{
+				width: 25%;
+				height: 30px;
+				line-height: 30px;
+				display: inline-block;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				border-radius: 25px;
+				text-align: center;
+				border: 1px solid lightgray;
+			}
+			.current{
+				background-color: red;
+			}
+		</style>
+	</head>
+	<body>
+		<ul class="header">
+		    <li key='数码' class="current">数码家电</li><li key='服装'>时尚服装</li><li key='奶粉'>母婴奶粉</li><li key='超市'>超市直营</li>
+		</ul>
+		<div>
+		    <div class="scrollload-container" style="display: block">
+		        <ul class="goods scrollload-content" >
+		        </ul>
+		    </div>
+		    
+		</div>
+		<script>
+			let key = "数码"
+			function getData(data) {
+			    return data
+			        .sort(function(a, b) {
+			          return Math.random() > 0.5 ? -1 : 1
+			        })
+			        .map(
+			            item => `
+			        <li class="mui-table-view-cell mui-media pro_item">
+			        	<a href="#" id="${item.id}">
+			        		<img class="mui-pull-left pro_icon" src="${url}/images?id=${item.id}">
+			        		<span class="title"><p>${item.title}</p></span>
+			        		<div class="labs"><span>${item.label[0]}</span><span>${item.label[1]}</span></div>
+			        		<span class='price'>￥${item.price}</span>				
+			        	</a>
+			        </li>
+			    `).join('')
+			  }
+			  
+			function init(){
+				let page = 1
+				new Scrollload({
+				  	container: document.querySelector('.scrollload-container'),
+				    content: document.querySelector('.scrollload-content'),
+				    loadMore: function(sl) {
+				        if (page === 2) {
+				          // 没有数据的时候需要调用noMoreData
+				            sl.noMoreData()
+				            return
+				        }
+				       
+						axios.get(`${url}/goods/category?key=${key}&&page=${page++}`)
+							.then((res)=>{
+								let data = res.data
+								$(sl.contentDom).append(getData(data))
+								sl.unLock()
+							})
+							.catch((err)=>{
+								sl.throwException()
+							})
+				    },
+				    // 下拉刷新打开
+				    enablePullRefresh: true,
+				    pullRefresh(sl){
+
+						axios.get(`${url}/goods/category?key=${key}`)
+							.then((res)=>{
+								let data = res.data
+								$(sl.contentDom).empty()
+								$(sl.contentDom).append(getData(data))
+								sl.refreshComplete()
+							})
+					}
+				})
+			}
+			init()
+			mui('.header').on('tap','li',function(){
+				key = this.getAttribute('key')
+				console.log(key);
+				$(this).siblings().removeClass("current");
+				$(this).addClass("current")
+				$(".goods").empty()
+				init()
+				$('.sl-ld-ball').hide()
+			})
+			// 点击商品跳转
+			mui('.goods').on('tap','li',function(){
+				let gid = this.children[0].getAttribute('id')
+				mui.openWindow({
+					id: 'detail.html',
+					url: 'detail.html',
+					extras:{
+						gid:gid
+					}	
+				});	
+			})
+		</script>
+		
+	</body>
+</html>

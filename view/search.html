@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/Scrollload.js"></script>
+		<script src="../js/config.js"></script>
+		<title>搜索</title>
+		<style>
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			[v-cloak]{
+			     display: none;
+			}
+			#app{
+				margin-top: 50px;
+			}
+			.scrollload-content{
+			    list-style: none;
+			    font-size: 14px;
+				background-color: #f2f2f2;
+			}
+			.title{
+				position: absolute;
+				left: 110px;    
+			}
+			.title>p{
+				font-size: 12px;
+				white-space: normal!important;
+				color: #000000;
+				width: 90%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;     /* 显示2行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
+			}
+			h1 {
+			    text-align: center;
+			    margin-bottom: 20px;
+			}
+			.scrollload-content>li{
+				height: 90px;
+				margin: 10px 0 10px 0;
+				background-color: white;
+				padding: 0px;
+			}		
+			.pro_item a{
+				display: block;
+				width: 100%;
+				height: 100%;
+				position: relative;
+				margin: 0px !important;
+			}
+			.title{
+				font-size: 14px;
+				position: absolute;
+				left: 110px;
+				margin-top: 5px;
+			}
+			.pro_icon{
+				width: 66px;
+				height: 66px;
+				margin: 12px 0 0 22px;
+			}
+			.price{
+				font-size: 15px;
+				color: red;
+				position: absolute;
+				left: 110px;
+				bottom: 0px;
+			}
+			.labs{
+				position: absolute;
+				bottom: 5px;
+				right: 10px;
+			}
+			.labs>span{
+				padding: 0px 3px 0px 3px; 
+				font-size: 12px;
+				border-radius: 5px;
+				color: #AAAAAA;
+				border: #AAAAAA 1px solid;
+				margin-left: 5px;
+			}
+			.noSearch{
+				text-align: center;
+				background-color: rgb(239, 239, 244);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">搜索结果</h1>
+			</header>
+			<!-- 显示搜索内容 -->
+			<div class="scrollload-container">
+			<p>
+			<div class="header-search">
+				<input v-model="search_key" @keyup.enter="doSearch" type="search" placeholder="搜你所想" style="border: 2px solid #e7e7f1;height: 32px !important;">
+			</div>
+			
+			</p>
+				<ul class="goods scrollload-content">
+				</ul>
+			</div>
+		</div>
+		<script>
+			
+			mui.init()
+			mui.plusReady(function () {
+				var pre = plus.webview.currentWebview();
+				var key = pre.key
+				var mode = pre.mode
+				console.log(key)
+				var app = new Vue({
+					el:"#app",
+					data:{
+						search_key:key,
+					},
+					methods:{
+						doSearch(){
+							key = this.search_key
+							mode = 'search'
+							$(".goods").empty()
+							init()
+							$('.sl-ld-ball').hide()
+						}
+					},
+					mounted() {
+						// 点击商品跳转
+						mui('.goods').on('tap','li',function(){
+							let gid = this.children[0].getAttribute('id')
+							console.log(gid);
+							mui.openWindow({
+								id: 'detail.html',
+								url: 'detail.html',
+								extras:{
+									gid:gid
+								}	
+							});	
+						})
+					
+					},
+					watch:{
+						search_key:{
+							handler(newVal, objVal){
+								if(newVal=='')$(".goods").empty()
+							}
+						}
+					}
+				})
+				// 加载搜索结果
+				function getData(data) {
+				    return data.sort(function(a, b) {
+				          return Math.random() > 0.5 ? -1 : 1
+				        })
+				        .map(
+				            item => `
+				        <li class="mui-table-view-cell mui-media pro_item">
+				        	<a href="#" id="${item.id}">
+				        		<img class="mui-pull-left pro_icon" src="${url}/images?id=${item.id}">
+				        		<span class="title"><p>${item.title}</p></span>
+				        		<div class="labs"><span>${item.label[0]}</span><span>${item.label[1]}</span></div>
+				        		<span class='price'>￥${item.price}</span>				
+				        	</a>
+				        </li>
+				    `).join('')
+				 }
+				function init(){
+					let URL = `${url}/goods/category?key=${key}`
+					if(mode=='search') URL = `${url}/goods/search?key=${key}`
+					new Scrollload({
+						container: document.querySelector('.scrollload-container'),
+						content: document.querySelector('.scrollload-content'),
+						loadMore: function(sl) {
+							axios.get(URL)
+								.then((res)=>{
+									let data = res.data
+									let content = getData(data)
+									if(data[0]==null){
+										content = `<p class='noSearch'>抱歉，暂时没有销售 '${key}' 商品<br/><img src='../img/sorry.png'></p>`
+									}
+									$(sl.contentDom).empty()
+									$(sl.contentDom).append(content)
+									sl.refreshComplete()
+								})
+							$('.sl-ld-ball').hide()
+						},
+						// 下拉刷新打开
+						enablePullRefresh: true,
+						pullRefresh(sl){
+							axios.get(URL)
+								.then((res)=>{
+									let data = res.data
+									$(sl.contentDom).empty()
+									$(sl.contentDom).append(getData(data))
+									sl.refreshComplete()
+								})
+						}
+					})
+				}
+				init()				
+				
+			})
+			
+		</script>		
+	</body>
+</html>

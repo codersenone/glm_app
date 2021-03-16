@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>注册</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<link href="../css/icons-extra.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/config.js"></script>
+		<script src="../index.js"></script>
+		<style>
+			.content{
+				margin-top: 50px;
+			}
+			.icon{
+				width: 150px;
+				height: 150px;
+				margin: 0 auto;
+				background-image: url(../img/welcome.png);
+				background-size: 100% 100%;	
+			}
+			.input-line{
+				width: 80%; 
+				height:50px;
+				background-color: #ededed;
+				border-radius: 10px;
+				line-height: 50px;
+				margin: 30px auto;
+			}
+			.input-line>span{
+				display: inline-block;
+				font-size: 24px;
+			}.input-line>input{
+				width: 80%;
+				 background-color: #ededed;
+				 border: none;
+			}
+			.submit{
+				background-color: red;
+				display: block;
+				width: 50%;
+				border-radius: 10px;
+				margin: 30px auto;
+				color: white
+			}
+			
+		</style>
+	</head>
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">注册</h1>
+		</header>
+		<div class="content" id="app">
+			<div class="icon"></div>
+			<div class="input-line">
+				<span class="mui-icon-extra mui-icon-extra-phone"></span>
+				<input type="number" oninput="value=value.replace(/[^\d]/g,'')" class="mui-input-clear" v-model="id"
+				 placeholder="请输入您的手机号码">
+			</div>
+			<div class="input-line">
+				<span class="mui-icon mui-icon-locked"></span>
+				<input type="password" class="mui-input-password" v-model="password" placeholder="请输入您的密码">
+			</div>
+			<button type="submit" :disabled="!id || !password" class="submit"
+			 data-loading-text="提交中" data-loading-icon-position="right" @click="doResign()">注册</button>
+		</div>
+	</body>
+		<script>
+			// 登录验证完成返回,定义父页面刷新
+			mui.init({
+				beforeback: function() {　　 
+					//获得父页面的webview
+					var list = plus.webview.currentWebview().opener();　　
+					//触发父页面的自定义事件(refresh),从而进行刷新
+					mui.fire(list, 'refresh');
+					//返回true,继续页面关闭逻辑
+					return true;
+				}
+			});
+			new Vue({
+				el:"#app",
+				data(){
+					return{
+						id:'',
+						password:'',
+					}
+				},
+				methods:{
+					doResign(){
+						let _this = this
+						axios.get(`${url}/resign?uid=${_this.id}&&psw=${_this.password}`)
+							.then((res)=>{
+								let data = res.data
+								let success = data.success
+								if(success==1){
+									mui.toast("注册成功，请返回页面进行登录操作",{
+										duration:'long',
+										type:'div'
+									})
+								}else if(success==0){
+									_this.password = ''
+									mui.toast("该号码已被注册，请使用其他号码注册",{
+										duration:'long',
+										type:'div'
+									})
+								}
+							})
+							.catch((err)=>{
+								
+							})
+					}
+				}
+				
+			})
+			
+			
+		</script>
+</html>

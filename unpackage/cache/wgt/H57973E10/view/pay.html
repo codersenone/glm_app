@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>支付页面</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<link href="../css/icons-extra.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/config.js"></script>
+		<style>
+			*{
+				padding: 0;
+				margin: 0;
+				list-style: none;
+			}
+			.content{
+				margin-top: 55px;
+			}
+			.showPrice{
+				width: 60%;
+				margin: 20px auto;
+			}
+			.showPrice :nth-child(2){
+				display: inline-block;
+				position: relative;
+				width: 80px;
+				left: 10px;
+				font-size: 30px;
+				color: red;
+			}
+			.showList{
+				margin-bottom: 75px;
+			}
+			.pay{
+				position: fixed;
+				background-color: red;
+				color: white;
+				width: 150px;
+				height: 35px;
+				border-radius: 20px;
+				left: 50%;
+				bottom: 30px;
+				margin-left: -75px;
+			}			
+			.li_normal{
+				list-style: none;
+				width: 100%;
+				height: 100px;
+				position: relative;
+			}
+			.title{
+				font-size: 12px;
+				margin-left: 30px;
+				width: 60%;
+				position: absolute;
+				left: 90px;
+			}
+			.li_normal>img{
+				width: 80px;
+				height: 80px;
+				position: absolute;
+				left: 10px;
+				top: 50%;
+				margin-top: -40px;
+			}
+			.price{
+				position: absolute;
+				left: 120px;
+				top: 80px;
+				
+			}
+			.num{
+				position: absolute;
+				left: 300px;
+				top: 80px;
+				font-size: 12px;
+				color: darkgray;
+				vertical-align: middle;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">付款</h1>
+			</header>
+			<div class="content">
+				<p>您正在为订单{{oid}}付款</p>
+				<div class="showPrice">
+					<span>订单总价：</span>
+					<span>￥{{order.totalPrice}}</span>
+				</div>
+				<span>商品列表</span>
+				<ul class="showList">
+					<li class="li_normal mui-table-view-cell mui-media" v-for="item in order.goods" @click="toDetail(item.gid)">
+						<img :src=item.imgURL>
+						<div class="title">{{item.title}}</div>
+						<span class="price">￥{{item.price}}</span>
+						<span class="num">数量：{{item.num}}</span>
+					</li>
+				</ul>
+				<button @click="finish" class="pay">付款 ￥{{order.totalPrice}}</button>
+			</div>
+		</div>
+		<script>
+			mui.init({
+			     beforeback: function() {  
+				     var list = plus.webview.currentWebview().opener();  
+				     mui.fire(list, 'refresh');  
+				     return true;  
+			     }  
+			 })
+			var pay = new Vue({
+				el:'#app',
+				data(){
+					return{
+						oid:'',
+						order:[],
+						goods:[]
+					
+					}
+				},
+				watch:{
+					oid(){
+						this.getOrder()
+					}
+				},
+				methods:{
+					// 获取订单信息
+					getOrder(){
+						axios.get(url+'/getOrderByOid?oid='+this.oid)
+							.then((res)=>{
+								let data = res.data
+								// 获取订单商品的信息
+								for(let item of data.goods){
+									axios.get(url+'/detail?id='+item.gid)
+										.then(res => {
+											let data = res.data
+											item.price = data.price
+											item.title = data.title
+											item.imgURL = url+'/images?id='+item.gid
+											this.goods.push(item)
+										})
+								}
+								this.order = data
+								this.order.goods = this.goods
+								
+							})
+					},
+					// 付款完成
+					finish(){
+						axios.get(url+'/doPay?oid='+this.oid)
+							.then((res)=>{
+								if(res.data.flag==1){
+									mui.alert("付款完成，购物愉快！")
+									var curr = plus.webview.currentWebview();
+									for(let i = 0; i<plus.webview.all().length; i++){
+										if(plus.webview.all()[i].id=='pay.html'||plus.webview.all()[i].id=='result.html'||plus.webview.all()[i].id=='orderDetail.html'){
+											plus.webview.all()[i].close()
+										}
+										
+									}
+								}
+							})
+					},
+					// 去商品详情
+					toDetail(id){
+						mui.openWindow({
+							url:'./detail.html',
+							id:'detail.html',
+							extras:{
+								gid:id
+							}
+						})
+					}
+				},
+				mounted() {
+					// 获取订单id
+					let _this = this
+					mui.plusReady(function(){
+					    var self = plus.webview.currentWebview();
+						_this.oid = self.oid
+						// 关闭提交订单页面
+						let resPage = plus.webview.getWebviewById('result.html')
+						if(resPage!=null)resPage.close()
+					});
+					
+				}
+			})
+		</script>
+	</body>
+</html>

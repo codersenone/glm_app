@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<link href="../css/icons-extra.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/config.js"></script>
+		<title>提交页面</title>
+		<style>
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			.content{
+				margin-top: 55px;
+			}
+			.li_normal{
+				list-style: none;
+				width: 100%;
+				height: 150px;
+				position: relative;
+			}
+			.title{
+				font-size: 12px;
+				margin-left: 30px;
+				width: 50%;
+				position: absolute;
+				left: 140px;
+			}
+			.li_normal>img{
+				width: 80px;
+				height: 80px;
+				position: absolute;
+				left: 30px;
+				top: 50%;
+				margin-top: -50px;
+			}
+			.gid{
+				position: absolute;
+				top: 2px;
+				left: 20px;
+				font-size: 12px
+			}
+			.price{
+				position: absolute;
+				left: 140px;
+				top: 110px;
+				color: red;
+			}
+			.num{
+				position: absolute;
+				left: 230px;
+				top: 110px;
+				vertical-align: middle;
+			}
+			.num span{
+				display: inline-block;
+				vertical-align: middle;
+				border-radius: 50%;
+				width: 25px;
+				height: 25px;
+				text-align: center;
+				line-height: 25px;
+				border: darkgray 1px solid;
+			}
+			.numshow{
+				width:50px!important;
+				font-size: 12px !important;
+				height: 30px!important; 
+				text-align: center;
+			}
+			.totalPrice{
+				position: fixed;
+				font-size: 18px;
+				font-weight: 900;
+				bottom: 10px;
+				left: 10px;
+			}
+			.toPost{
+				position: absolute;
+				width: 100px;
+				height: 30px;
+				background-color: red;
+				border-radius: 20px;
+				color: white;
+				right: 10px;
+				top: 50%;
+				margin-top: -15px;
+			}
+			.showList{
+				margin-bottom: 50px;
+			}
+			.button_nav{
+				position: fixed;
+				bottom: 0;
+				width: 100%;
+				height: 50px;
+				background-color: #efeff4;
+				border-top: 2px solid #000000;
+			}
+			.toAddAddress{
+				width: 180px;
+				background-color: red;
+				color: white;
+				vertical-align: middle;
+				border-radius: 20px;
+			}
+			.gid{
+				position: absolute;
+				top: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">提交页面</h1>
+			</header>
+			<div class="content">
+				<span>收货地址：</span>
+				<div v-if="addrList.length!=0">
+					<select v-model="selectAddr">
+						<option v-for="item in addrList" :value="item.aid">姓名：{{item.name}},联系方式：{{item.phone}} ,详细地址：{{item.addr}}</option>
+					</select>
+				</div>
+				<div v-else>你还没有创建地址信息<button class="toAddAddress" @click="toAddAddress">去创建地址信息</button></div>
+				<ul class="showList">
+					<li class="li_normal mui-table-view-cell mui-media" v-for="(item,i) in list">
+						<p class="gid">商品编号：{{item.gid}}</p>
+						<img :src=item.imgUrl>
+						<div class="title">{{item.title}}</div>
+						<span class="price">￥{{item.price}}</span>
+						<span class="num">
+							<span @click="numDec(i)">-</span>
+							<input class="numshow" type="number" @change="getTotal()" v-model="item.num">
+							<span @click="numAdd(i)">+</span>
+						</span>
+					</li>
+				</ul>
+				<div class="button_nav">
+					<span class="totalPrice">总价：￥{{totalPrice}}</span>
+					<button class="toPost" @click="toPost" :disabled="selectAddr==null">提交订单</button>
+				</div>
+			</div>
+		</div>
+		<script>
+			mui.init({
+			     beforeback: function() {  
+				     var list = plus.webview.currentWebview().opener();  
+				     mui.fire(list, 'refresh');  
+				     return true;  
+			     }  
+			 })
+			 window.addEventListener('refresh', function(e) {
+			     location.reload();  
+			 })
+			var result = new Vue({
+				el:'#app',
+				data(){
+					return{
+						list:[],
+						addrList:[],
+						selectAddr:null,
+						uid:0,
+						totalPrice:0,
+						oid:0,
+						
+					}
+				},
+				created() {
+					this.uid = localStorage.getItem('uid')
+				},
+				watch:{
+					list(){
+						this.getTotal()
+					}
+				},
+				methods:{
+					// 去添加地址信息
+					toAddAddress(){
+						mui.openWindow({
+							url:'./addressList.html',
+							id:'addressList.html',
+						})
+					},
+					// 减少数目
+					numDec(i){
+						this.list[i].num--
+						this.getTotal()
+					},
+					// 增加数目
+					numAdd(i){
+						this.list[i].num++
+						this.getTotal()
+					},
+					// 改变总价
+					getTotal(){
+						let result = 0
+						for(let item of this.list){
+							result += parseInt(item.num)*item.price
+						}
+						this.totalPrice = parseFloat(result.toFixed(3))
+					},
+					// 提交订单
+					toPost(){
+						let orderId = 123
+						let addrMsg = {
+							name:'',
+							phone:'',
+							address:''
+						}
+						let goodsMsg = []
+						// 获取用户选择的地址
+						for(let item of this.addrList){
+							if(item.aid==this.selectAddr){
+								addrMsg.name = item.name
+								addrMsg.phone = item.phone
+								addrMsg.address = item.addr
+							}
+						}
+						// 获取结算的商品列表
+						let _this = this
+						for(let item of this.list){
+							let good={}
+							good.gid = item.gid
+							good.num = item.num
+							goodsMsg.push(good)
+						}
+						function getOId(){
+							// let date = new Date()
+							console.log();
+							let oid = Date.now().toString(10).slice(5)+parseInt(Math.random()*100000)
+							return oid
+						}
+						this.oid = getOId()
+						// 查询用户需要的商品是否足够库存
+						axios({
+							method:'post',
+							url:url+'/getStock',
+							data:{
+								goods:goodsMsg
+							}
+						})
+						.then(res=>{
+								let unEnough = []
+								let data = res.data
+								for(let i=0; i<data.list.length;i++){
+									if(data.list[i]<goodsMsg[i].num){
+										unEnough.push(goodsMsg[i].gid)
+									}
+								}
+								if(unEnough.length!=0){
+									mui.alert("商品"+unEnough[0]+"库存不足!请重新选择商品")
+								}else{
+									// 购买商品以后修改商品库存
+									axios({
+										method:'post',
+										url:url+'/stockChange',
+										data:{
+											goods:goodsMsg,
+											flag:-1
+										}
+									}).then(res=>{
+										 if(res.data.flag==1){
+											 axios({
+											 	method:'post',
+											 	url:url+'/recordOrders',
+											 	data:{
+											 		uid:_this.uid,
+											 		addr:addrMsg,
+											 		goods:goodsMsg,
+											 		orderId:_this.oid,
+											 		totalPrice:_this.totalPrice
+											 	}
+											 }).then((res)=>{
+											 	let data = res.data
+											 	if(data.code==1){
+											 		mui.toast("提交订单成功，请尽快付款")
+											 		mui.openWindow({
+											 			url:'./pay.html',
+											 			id:'pay.html',
+											 			extras:{
+											 				oid:_this.oid
+											 			}
+											 		})
+													// 刷新购物车
+												   var list = plus.webview.currentWebview().opener();
+												   console.log(list.id);
+												   if(list.id == 'car.html')mui.fire(list, 'refresh')
+												   
+											 	}
+											 })
+										 }
+									})
+									
+								}
+							})
+				
+					}
+				},
+				mounted() {
+					// 获取结算的商品
+					let _this = this
+					mui.plusReady(function(){
+					    var self = plus.webview.currentWebview();
+						_this.list = self.list
+					});
+					// 获取用户的地址列表
+					if(_this.uid!=0){
+						axios.get(url+'/getAddress?uid='+_this.uid)
+							.then((res)=>{
+								let data = res.data
+								_this.addrList = data
+							})
+					}
+				}
+			})
+		</script>
+	</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>首页</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/better-scroll.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/axios.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src="../js/Scrollload.js"></script>
+		<script src="../js/my_scroll.js"></script>
+		<script src="../js/better-scroll.js"></script>
+		<script src="../js/config.js"></script>
+		<style>
+			* {
+			    margin: 0;
+			    padding: 0;
+			    box-sizing: border-box
+			}
+			.header-bar {
+				background-color: rgba(230, 0, 18, 0);
+			}
+			.mui-media-body{
+				font-size: 14px!important;
+			}
+			.icon{
+				display: block;
+				width: 50px;
+				height: 50px;
+				background-image: url(../img/3c.png);
+				background-size: 100% 100%;
+				margin: 0 auto;
+			}
+			.icon_3c{
+				background-image: url(../img/3c.png);		
+			}
+			.icon_chaoshi{
+				background-image: url(../img/chaoshi.png);
+			}
+			.icon_naifen{
+				background-image: url(../img/naifen.png);
+			}
+			.icon_yifu{
+				background-image: url(../img/yifu.png);
+			}
+			.icon_hot1{
+				width: 65px;
+				height: 65px;
+				
+			}
+			.icon_hot2{
+				width: 65px;
+				height: 65px;
+				
+			}
+			.nPrice{
+				color: red ;
+				margin-left: 10px;
+			}
+			.oPrice{
+				color: darkgray;
+				text-decoration: line-through;
+				font-size: 10px;
+			}
+			
+			.scrollload-content{
+			    list-style: none;
+			    font-size: 14px;
+				background-color: #f2f2f2;
+			}
+			
+			h1{
+			    text-align: center;
+			    margin-bottom: 20px;
+			}
+			.scrollload-content>li{
+				height: 90px;
+				margin: 10px 0 10px 0;
+				background-color: white;
+				padding: 0px;
+			}		
+			.pro_item a{
+				display: block;
+				width: 100%;
+				height: 100%;
+				position: relative;
+				margin: 0px !important;
+			}
+			.title{
+				position: absolute;
+				left: 110px;    
+			}
+			.title>p{
+				font-size: 12px;
+				white-space: normal!important;
+				color: #000000;
+				width: 90%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;     /* 显示2行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
+			}
+			.pro_icon{
+				width: 66px;
+				height: 66px;
+				margin: 12px 0 0 22px;
+			}
+			.price{
+				font-size: 15px;
+				color: red;
+				position: absolute;
+				left: 110px;
+				bottom: 0px;
+			}
+			.labs{
+				position: absolute;
+				bottom: 5px;
+				right: 10px;
+			}
+			.labs>span{
+				padding: 0px 3px 0px 3px; 
+				font-size: 12px;
+				border-radius: 5px;
+				color: #AAAAAA;
+				border: #AAAAAA 1px solid;
+				margin-left: 5px;
+			}
+			 #top{
+				position: fixed;
+				bottom: 40px;
+				right: 30px;
+				background: url("../img/scrolltop.png");
+				background-size: 100% 100%;
+				width: 20px;
+				height: 66px;
+				display: none;
+			 }
+			 .list{
+				 background-color: #efeff4!important;
+			 }
+			 
+			 
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header id="header" class="mui-bar mui-bar-transparent header-bar">
+				<div class="topbar" >
+					<div class="header-search">
+						<input @keyup.enter="doSearch" v-model="search_key" type="search" placeholder="搜你所想" style="border: 2px solid #f14646;height: 32px !important;color: white!important;">
+					</div>
+				</div>
+			</header>
+			<div class="banner">
+				<div class="mui-slider" >
+					<div class="mui-slider-group mui-slider-loop">
+						<!-- 额外增加的一个节点(循环轮播：第一个节点是最后一张轮播) -->
+						<div class="mui-slider-item mui-slider-item-duplicate">
+							<a href="#">
+								<img style="width: 100%;" src="../img/banner2.jpg">
+							</a>
+						</div>
+						<!-- 第一张 -->
+						<div class="mui-slider-item">
+							<a href="#">
+								<img style="width: 100%;" src="../img/banner.jpg">
+							</a>
+						</div>
+						<!-- 第二张 -->
+						<div class="mui-slider-item">
+							<a href="#">
+								<img style="width: 100%;" src="../img/banner1.jpg">
+							</a>
+						</div>
+						<!-- 第三张 -->
+						<div class="mui-slider-item">
+							<a href="#">
+								<img style="width: 100%;" src="../img/banner2.jpg">
+							</a>
+						</div>
+						<!-- 额外增加的一个节点(循环轮播：最后一个节点是第一张轮播) -->
+						<div class="mui-slider-item mui-slider-item-duplicate">
+							<a href="#">
+								<img style="width: 100%;" src="../img/banner.jpg">
+							</a>
+						</div>
+					</div>
+					<div class="mui-slider-indicator">
+						<div class="mui-indicator mui-active"></div>
+						<div class="mui-indicator"></div>
+						<div class="mui-indicator"></div>
+					</div>
+				</div>
+				<div class="banner-bg"></div>
+			</div>
+			<div class="mui-content menus">
+				<ul id="menusList" class="menusList mui-table-view mui-grid-view mui-grid-9">
+					<div class="topMenu mui-row">
+						<li class="iconlist mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3"><a href="数码" >
+								<span class="icon icon_3c"></span>
+								<div class="mui-media-body">数码电器</div></a></li>
+						<li class="iconlist mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3"><a href="服装" >
+								<span class="icon icon_yifu"></span>
+								<div class="mui-media-body">时尚服装</div></a></li>
+						<li class="iconlist mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3"><a href="奶粉" >
+								<span class="icon icon_naifen"></span>
+								<div class="mui-media-body">母婴奶粉</div></a></li>
+						<li class="iconlist mui-table-view-cell mui-media mui-col-xs-3 mui-col-sm-3"><a href="超市">
+								<span class="icon icon_chaoshi"></span>
+								<div class="mui-media-body">超市直营</div></a></li>
+					</div>
+				</ul> 
+			</div>
+			<p>热销商品</p>
+			<div class="mui-row">
+				<ul id="menusList" class="goods menusList mui-table-view mui-grid-view mui-grid-9">
+					<li class="list mui-table-view-cell mui-media mui-col-xs-6 mui-col-sm-6"><a :id=hot[0].id>
+						<span class="icon icon_hot1"></span>
+						<span class="oPrice">￥{{hot[0].oPrice}}</span>
+						<span class="nPrice">￥{{hot[0].price}}</span></a>
+					</li>
+					<li class="list mui-table-view-cell mui-media mui-col-xs-6 mui-col-sm-6"><a :id=hot[1].id>
+						<span class="icon icon_hot2"></span>
+						<span class="oPrice">￥{{hot[1].oPrice}}</span>
+						<span class="nPrice">￥{{hot[1].price}}</span></a>
+					</li>
+				</ul>
+			</div>
+			<p>逛更多</p>
+			<div class="scrollload-container">
+				<ul class="goods scrollload-content">
+				</ul>
+			</div>	
+			 <div id="top"></div>
+		</div>
+
+		<!-- vue实例，负责获取数据以及渲染页面-->
+		<script>
+			new Vue({
+				el:'#app',
+				data(){
+					return{
+						search_key:'',
+						hot:[
+							{
+								id:0,
+								oPrice:0,
+								price:0
+							},
+							{
+								id:0,
+								oPrice:0,
+								price:0
+							}
+						],
+					}
+				},
+				methods:{
+					doSearch(){
+						mui.openWindow({
+							id: 'search.html',
+							url: 'search.html',
+							extras:{
+								key:this.search_key,
+								mode:'search'
+							}	
+						});	
+					}
+				},
+				mounted() {
+					var _this = this
+					axios.get(`${url}/goods/hot`)
+						.then((res)=>{
+							let data = res.data
+							_this.hot = data
+							$('.icon_hot1').css('background-image','url('+url+'/images?id='+_this.hot[0].id+')')
+							$('.icon_hot2').css('background-image','url('+url+'/images?id='+_this.hot[1].id+')')
+						})
+					// 启动轮播图
+					mui(".mui-slider").slider({
+						interval: 2000,
+						scrollTime: 1000
+					});
+					// 点击菜单图标跳转
+					mui.init()
+					mui('.topMenu').on('tap','li',function(){
+						let key = this.children[0].getAttribute('href')
+						mui.openWindow({
+							id: 'search.html',
+							url: 'search.html',
+							extras:{
+								key:key,
+								mode:'category'
+							}	
+						});	
+					})
+					// 点击商品跳转
+					mui('.goods').on('tap','li',function(){
+						let gid = this.children[0].getAttribute('id')
+						mui.openWindow({
+							id: 'detail.html',
+							url: 'detail.html',
+							extras:{
+								gid:gid
+							}	
+						});	
+					})
+					
+					//返回顶部 
+					var top_btn = document.getElementById("top");
+					   var begin = 0,end = 0,timer = null;
+					   window.onscroll = function () {
+					       if(parseInt(my_scroll().top)>0){
+					          top_btn.style.display = 'block'
+					       }else{
+					          top_btn.style.display = 'none';
+					       }
+					       begin = my_scroll().top;
+					   }
+					   top_btn.onclick = function () {
+					      clearInterval(timer);
+					      timer = setInterval(function () {
+					          begin = begin + (end - begin)*0.2;
+					          window.scrollTo(0,begin);
+					         if(parseInt(begin)===0){
+					             clearInterval(timer);
+					         }
+					      },20);
+					   }
+					
+				}
+			})
+		</script>
+		<!-- 懒加载组件部分代码 -->
+		<script>
+			function getData(data) {
+				// console.log(data)
+			    return data
+			        .sort(function(a, b) {
+			          return Math.random() > 0.5 ? -1 : 1
+			        })
+			        .map(
+			            item => `
+			        <li class="mui-table-view-cell mui-media pro_item">
+						<a href="#" id="${item.id}">
+							<img class="mui-pull-left pro_icon" src="${url}/images?id=${item.id}">
+							<span class="title"><p>${item.title}</p></span>
+							<div class="labs"><span>${item.label[0]}</span><span>${item.label[1]}</span></div>
+							<span class='price'>￥${item.price}</span>				
+						</a>
+			        </li>
+			    `).join('')
+			  }
+			let page = 1
+			new Scrollload({
+			  	container: document.querySelector('.scrollload-container'),
+			    content: document.querySelector('.scrollload-content'),
+			    loadMore: function(sl) {
+			        if (page === 6) {
+			            sl.noMoreData()
+			            return
+			        }
+					axios.get(`${url}/goods?page=${page++}`)
+						.then((res)=>{
+							let data = res.data
+							$(sl.contentDom).append(getData(data))
+							console.log();
+							sl.unLock()
+						})
+						.catch((err)=>{
+							sl.throwException()
+						})
+			    },
+			    //下拉刷新打开
+			    enablePullRefresh: true,
+			    pullRefresh: function (sl) {
+					axios.get(`${url}/goods?page=1`)
+						.then((res)=>{
+							let data = res.data
+							$(sl.contentDom).prepend(getData(data))
+							sl.refreshComplete()
+						})
+			    }
+			})
+		</script>
+	
+	</body>
+		
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>购物车</title>
+		<style>
+			#content{
+				margin-top: 50px;
+			}
+			.empty_car{
+				width: 300px;
+				height: 300px;
+				background-image: url(../img/empty.png);
+				background-size: 100% 100%;
+				margin: 130px auto;
+			}
+			.empty_car>p{
+				text-align: center;
+			}
+			.nolog{
+				text-align: center;
+				vertical-align: middle;
+				line-height: 33px;
+			}
+			.nolog>button{
+				background-color: red;
+				border-radius: 15px;
+			}
+			
+			.li_normal{
+				list-style: none;
+				width: 100%;
+				height: 150px;
+				position: fixed;
+			}
+			.title{
+				font-size: 12px;
+				margin-left: 10px;
+				width: 50%;
+				position: absolute;
+				left: 140px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;     /* 显示2行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
+			}
+			.checkbox{
+				position: absolute;
+				left: 5;
+				top: 50%;
+				height: 20px;
+				width: 20px; 
+				margin-top: -10px;
+				border: 1px solid #c5c7c7;
+			}
+			.li_normal>img{
+				width: 80px;
+				height: 80px;
+				position: absolute;
+				left: 45px;
+				top: 50%;
+				margin-top: -50px;
+			}
+			.gid{
+				position: absolute;
+				top: 2px;
+				left: 20px;
+				font-size: 12px
+			}
+			.price{
+				position: absolute;
+				left: 140px;
+				top: 110px;
+				color: red;
+			}
+			.num{
+				position: absolute;
+				left: 240px;
+				top: 110px;
+				vertical-align: middle;
+			}
+			.num span{
+				display: inline-block;
+				vertical-align: middle;
+				border-radius: 50%;
+				width: 25px;
+				height: 25px;
+				text-align: center;
+				line-height: 25px;
+				border: darkgray 1px solid;
+			}
+			.del{
+				font-size: 13px;
+				position:absolute;
+				right: 10px;
+				top: 50%;
+				color: red;
+			}
+			 input[type='checkbox']{
+				-webkit-appearance: none;
+				border-radius: 100%;
+				background: url(../img/null.png) no-repeat;
+				background-size: 100%;
+				vertical-align: middle;
+			}
+			input[type='checkbox']:checked {
+				-webkit-appearance: none;
+				outline-style: none;
+				border-radius: 100%;
+				background-size: 100%;
+				vertical-align: middle;
+				background: url(../img/checked.png) no-repeat !important;
+				background-size: 100% !important;
+			}
+			.button_nav{
+				position: fixed;
+				bottom: 0;
+				width: 100%;
+				height: 60px;
+				background-color: #efeff4;
+				border-top: 2px solid #000000;
+			}
+			.button_nav>button{
+				width: 80px;
+				height: 30px;
+				position: absolute;
+				background-color: red;
+				right: 10px;
+				top: 50%;
+				margin-top: -15px;
+				border-radius: 20px;
+				color: white;
+			}
+			
+			.box{
+				display: block;
+				position: absolute;
+				left: 10px;
+			}
+			.nav_check{
+				position: absolute;
+				top: 10px;
+				margin-left: 5px;
+				vertical-align: middle;
+			}
+			.nav_span{
+				display: inline-block;
+				position: absolute;
+				top: 5px;
+				font-size: 14px;
+			}
+			.totalPrice{
+				position: absolute;
+				font-size: 18px;
+				font-weight: 900;
+				bottom: 3px;
+				left: 10px;
+			}
+			.showList{
+				margin-bottom: 60px;
+			}
+		</style>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src='../js/axios.min.js'></script>
+		<script src="../js/config.js"></script>
+	</head>
+	<body>
+		<div id="car">
+			<header class="mui-bar mui-bar-nav">
+				<h1 class="mui-title">购物车</h1>
+			</header>
+			<template>
+			<div id="content">
+				<div v-show="uid!=''">
+					<div v-if="cartNum==0" class="empty_car"><p>购物车空空如也，商品还在等您选购呢</p></div>
+					<div v-else>
+						<ul class="showList" style="padding: 0;">				
+							<li class="li_normal mui-table-view-cell mui-media" v-for="(item,i) in show_content">
+								<span class="gid">商品编号：{{item.gid}}</span>
+								<input @change="{$set(content[i],'select',item.select);clickFlag = !clickFlag;}" class="checkbox" v-model="item.select" type="checkbox">
+								<img :src=item.imgUrl @click="toDetail(item.gid)">
+								<div class="title" @click="toDetail(item.gid)">{{item.title}}</div>
+								<span class="price">￥{{item.price}}</span>
+								<span class="num"><span @click="numDec(i)">-</span><input @change="numChange(i)" style="width:50px;font-size: 10px;height: 30px; text-align: center;" type="number" v-model="item.num"><span @click="numAdd(i)">+</span></span>
+								<span class="del" @click='doDel(i)'>删除</span>
+							</li>
+							
+						</ul>
+						
+					</div>
+					<div class="button_nav">
+						<div class="nav_span">全选<input type="checkbox" v-model="allFlag" class="checkbox nav_check" /></div>
+						<span class="totalPrice">总价：￥{{totalPrice}}</span>
+						<button @click="toResult" :disabled="totalPrice==0">结算</button>
+					</div>
+				</div>
+				<div v-show="uid==''">
+					<div class="empty_car"><p class="nolog">您还没登录&nbsp;&nbsp;<button @click="toLogin">去登录</button></p></div>
+				</div>
+			</div>
+			</template>
+		</div>
+	</body>
+	<script>
+		// 登录完成自动刷新页面
+		 (function($, doc) {
+		    window.addEventListener('refresh', function(e) {
+		        location.reload();
+		    });
+		})(mui, document);
+		const car = new Vue({
+			el:'#car',
+			data(){
+				return{
+					uid:'',
+					login_flag:false,
+					cartNum:0,
+					content:[],
+					show_content:[],
+					allFlag:false,
+					clickFlag:true,
+					clickFlag2:true,
+					totalPrice:0
+				}
+			},
+			created() {
+				this.uid = localStorage.getItem("uid")||''
+				this.login_flag = localStorage.getItem("login_flag") ||false
+				
+			},
+			methods:{
+				// 去登陆
+				toLogin(){
+					mui.openWindow({
+					    url:'./login.html',
+					    id:'login.html',
+					})
+				},
+				// 初始化全选状态
+				init(){
+					let flag = true
+					for(let i = 0; i<this.show_content.length; i++){
+						if(this.show_content[i].select==false){
+							flag = false
+							
+						} 
+					}
+					this.allFlag = flag
+				},
+				// 删除商品
+				doDel(i){
+					let _this = this
+					console.log("传入的下标："+i);
+					mui.confirm('是否删除该商品','提示',['取消','确认'],function (e) {
+						if(e.index==1){
+							mui.toast("商品移除成功")
+							_this.show_content.splice(i,1)
+							_this.content.splice(i,1)
+						}
+					},'div')
+					
+				},
+				numChange(i){
+					this.content[i].num=parsetInt(this.show_content[i].num)
+					this.getTotal()
+				},
+				numAdd(i){
+					this.show_content[i].num++
+					this.content[i].num++
+					this.getTotal()
+				},
+				numDec(i){
+					if(this.show_content[i].num>1){
+						this.show_content[i].num--
+						this.content[i].num--
+						this.getTotal()
+					}
+				},
+				// 改变总价
+				getTotal(){
+					let result = 0
+					for(let item of this.show_content){
+						if(item.select==true){
+							result += parseInt(item.num)*item.price
+						}
+					}
+					this.totalPrice = result
+				},
+				// 去结算
+				toResult(){
+					let resData = []
+					for(let item of this.show_content){
+						if(item.select==true)resData.push(item)
+					}
+					mui.openWindow({
+					    url:'./result.html',
+					    id:'result.html',
+						extras:{
+							list:resData
+						}
+					})
+				},
+				// 去商品详情
+				toDetail(id){
+					mui.openWindow({
+					    url:'./detail.html',
+					    id:'detail.html',
+						extras:{
+							gid:id
+						}
+					})
+				}
+			},
+			computed:{
+			
+			},
+			watch:{
+				clickFlag(){
+					
+					let flag = true
+					for(let i = 0; i < this.show_content.length; i++){
+						if(this.show_content[i].select==false)flag = false 
+					}
+					this.allFlag = flag
+					this.getTotal()
+				},
+				clickFlag2(nval,oval){
+					
+					if(this.allFlag == true){
+						for(let i = 0; i < this.show_content.length; i++){
+							this.show_content[i].select = false
+							this.content[i].select = false
+						}		
+						this.allFlag = false
+					}else if(this.allFlag == false){
+						for(let i = 0; i < this.show_content.length; i++){
+							this.show_content[i].select = true
+							this.content[i].select = true
+						}
+						this.allFlag = true
+					}
+					this.getTotal()
+				},
+				show_content(){
+					// 数据加载完成以后判断全选的状态
+					this.$nextTick(function(){
+						this.init()
+						this.getTotal()
+					})
+				},
+				
+			},
+			mounted(){
+				
+					let _this = this
+					mui.plusReady(() =>{
+						var ws=plus.webview.currentWebview();
+						ws.addEventListener("show", function(e){
+							location.reload()
+						})
+						if(_this.uid!=0){
+							ws.addEventListener("hide", function(e){
+								axios({
+									method:'post',
+									url:`${url}/updateCar`,
+									data:{
+										uid:_this.uid,
+										content:_this.content
+									}
+								})
+							})	
+						}
+					})
+					if(_this.uid!=0){
+						// 获取用户购物车信息
+						axios.get(`${url}/getCar?uid=${this.uid}`)
+							.then((res)=>{
+								let data = res.data
+								if(data.length!=0){
+									let i =0
+									for(let _item of data){
+										// 用于同步数据库中用户的购物车信息						
+										new Promise(resolve=>{
+											axios.get(`${url}/detail?id=${_item.gid}`)
+												.then((res)=>{
+													let data = res.data
+													resolve(data)
+												})
+										}).then(res=>{
+											_item.title = res.title
+											_item.price = res.price
+											_item.imgUrl = `${url}/images?id=${_item.gid}`
+											this.show_content.push(_item)
+											let tempContent = {gid:_item.gid,num:_item.num,select:_item.select}
+											this.content.push(tempContent)
+										})
+									}
+									for(let item of data){
+										this.cartNum+=item.num
+									}
+								}
+								
+							})
+					}
+					
+					$(function(){
+						$('.checkbox').on('change',function(){
+							_this.clickFlag = !_this.clickFlag
+						})
+						$('.nav_check').on('click',function(){
+							_this.clickFlag2 = !_this.clickFlag2
+						})
+						
+						
+					})
+					
+				
+					
+			},
+		})
+		
+		
+	</script>
+</html>

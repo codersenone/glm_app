@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<title>地址列表</title>
+		<link href="../css/mui.css" rel="stylesheet"  />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.min.js"></script>
+		<script src="../js/jquery-3.5.1.min.js"></script>
+		<script src='../js/axios.min.js'></script>
+		<script src="../js/config.js"></script>
+		<style>
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			.content{
+				margin-top: 55px;
+			}
+			.contentList{
+				list-style: none;
+				height: 120px;
+				border-bottom: darkgray 1px solid;
+				position: relative;
+				text-indent: 1em;
+			}
+			.contentList p{
+				margin-top: 10px;
+				width: 80%;
+			}
+			.delBtn{
+				position: absolute;
+				right: 10px;
+				top: 25%;
+				width: 50px;
+				height: 30px;
+				margin-top: -15px;
+				background-color: red;	
+			}
+			.editBtn{
+				position: absolute;
+				right: 10px;
+				top: 65%;
+				width: 50px;
+				height: 30px;
+				margin-top: -15px;
+			}
+			.addBtn{
+				position: fixed;
+				bottom: 20px;
+				left: 50%;
+				margin-left: -100px;
+				width: 200px;
+				height: 60px;
+				background-color: red;
+				border-radius: 50px;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header class="mui-bar mui-bar-nav">
+				<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+				<h1 class="mui-title">地址信息编辑</h1>
+			</header>
+			<div class="content">
+				<ul>
+					<li class="contentList" v-for="(item,i) in addList">
+						<p><span>姓名：</span>{{item.name}}</p>
+						<p><span>联系方式：</span>{{item.phone}}</p>
+						<p><span>详细地址：</span>{{item.addr}}</p>
+						<button class="delBtn" type="button" @click="del(item)">删除</button>
+						<button class="editBtn" type="button" @click="edit(item)">编辑</button>
+					</li>
+				</ul>
+				<button class="addBtn" @click="add">添加新地址</button>
+			</div>
+		</div>
+		<script>
+			window.addEventListener('refresh', function(e) {  
+			    location.reload();  
+			})
+			mui.init({
+			     beforeback: function() {  
+				     var list = plus.webview.currentWebview().opener();  
+				     mui.fire(list, 'refresh');  
+				     return true;  
+			     }  
+			 });
+			var addList = new Vue({
+				el:'#app',
+				data(){
+					return{
+						uid:0,
+						addList:[],
+					}
+				},
+				methods:{
+					edit(item){
+						mui.openWindow({
+							id: 'addressEdit.html',
+							url: './addressEdit.html',
+							extras:{
+								item:item,
+								flag:0
+							}	
+						});	
+					},
+					del(item){
+						let _this = this
+						// 提示用户是否删除信息
+						mui.confirm('是否删除该地址信息','提示',['取消','确认'],function (e) {
+							if(e.index==1){
+								axios({
+									method:'post',
+									url:url+'/delAddress',
+									data:{
+										uid:_this.uid,
+										aid:item.aid
+									}
+								}).then((res)=>{
+									let data = res.data
+									if(data.flag==1){
+										mui.toast("删除地址成功")
+										location.reload()
+									}
+								})
+							}
+						},'div')		
+					},
+					add(){
+						mui.openWindow({
+							id: 'addressEdit.html',
+							url: './addressEdit.html',
+							extras:{
+								flag:1
+							}	
+						});	
+					}
+				},
+				created() {
+					this.uid = localStorage.getItem('uid')
+				},
+				mounted() {
+					if(this.uid!=0){
+						axios.get(url+'/getAddress?uid='+this.uid)
+							.then((res)=>{
+								let data = res.data
+								this.addList = data
+							})
+					}
+				}
+			})
+		</script>
+	</body>
+</html>
