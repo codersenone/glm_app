@@ -27,51 +27,57 @@
 			}
 			.title{
 				font-size: 12px;
-				margin-left: 30px;
 				width: 50%;
 				position: absolute;
-				left: 140px;
+				left: 120px;
+				margin-top: 5px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: normal ！important;
+				display: -webkit-box;
+				-webkit-line-clamp:3;     /* 显示3行，为auto时不隐藏 */
+				-webkit-box-orient: vertical;
 			}
 			.li_normal>img{
 				width: 80px;
 				height: 80px;
 				position: absolute;
-				left: 30px;
+				left: 10px;
 				top: 50%;
 				margin-top: -50px;
 			}
 			.gid{
 				position: absolute;
 				top: 2px;
-				left: 20px;
+				left: 15px;
 				font-size: 12px
 			}
 			.price{
 				position: absolute;
-				left: 140px;
-				top: 110px;
+				left: 120px;
+				bottom:20px;
 				color: red;
 			}
 			.num{
 				position: absolute;
-				left: 230px;
-				top: 110px;
+				right: 20px;
+				bottom: 5px;
 				vertical-align: middle;
 			}
 			.num span{
 				display: inline-block;
 				vertical-align: middle;
 				border-radius: 50%;
-				width: 25px;
-				height: 25px;
+				width: 20px;
+				height: 20px;
 				text-align: center;
-				line-height: 25px;
+				line-height: 20px;
 				border: darkgray 1px solid;
 			}
 			.numshow{
 				width:50px!important;
 				font-size: 12px !important;
-				height: 30px!important; 
+				height: 20px!important; 
 				text-align: center;
 			}
 			.totalPrice{
@@ -114,6 +120,7 @@
 				position: absolute;
 				top: 0;
 			}
+			
 		</style>
 	</head>
 	<body>
@@ -145,7 +152,7 @@
 				</ul>
 				<div class="button_nav">
 					<span class="totalPrice">总价：￥{{totalPrice}}</span>
-					<button class="toPost" @click="toPost" :disabled="selectAddr==null">提交订单</button>
+					<button class="toPost" @click="toPost">提交订单</button>
 				</div>
 			</div>
 		</div>
@@ -209,99 +216,102 @@
 					},
 					// 提交订单
 					toPost(){
-						let orderId = 123
-						let addrMsg = {
-							name:'',
-							phone:'',
-							address:''
-						}
-						let goodsMsg = []
-						// 获取用户选择的地址
-						for(let item of this.addrList){
-							if(item.aid==this.selectAddr){
-								addrMsg.name = item.name
-								addrMsg.phone = item.phone
-								addrMsg.address = item.addr
+						if(this.selectAddr==null){
+							mui.toast('请先选择收货地址')
+						}else{
+							let orderId = 123
+							let addrMsg = {
+								name:'',
+								phone:'',
+								address:''
 							}
-						}
-						// 获取结算的商品列表
-						let _this = this
-						for(let item of this.list){
-							let good={}
-							good.gid = item.gid
-							good.num = item.num
-							goodsMsg.push(good)
-						}
-						function getOId(){
-							// let date = new Date()
-							console.log();
-							let oid = Date.now().toString(10).slice(5)+parseInt(Math.random()*100000)
-							return oid
-						}
-						this.oid = getOId()
-						// 查询用户需要的商品是否足够库存
-						axios({
-							method:'post',
-							url:url+'/getStock',
-							data:{
-								goods:goodsMsg
-							}
-						})
-						.then(res=>{
-								let unEnough = []
-								let data = res.data
-								for(let i=0; i<data.list.length;i++){
-									if(data.list[i]<goodsMsg[i].num){
-										unEnough.push(goodsMsg[i].gid)
-									}
+							let goodsMsg = []
+							// 获取用户选择的地址
+							for(let item of this.addrList){
+								if(item.aid==this.selectAddr){
+									addrMsg.name = item.name
+									addrMsg.phone = item.phone
+									addrMsg.address = item.addr
 								}
-								if(unEnough.length!=0){
-									mui.alert("商品"+unEnough[0]+"库存不足!请重新选择商品")
-								}else{
-									// 购买商品以后修改商品库存
-									axios({
-										method:'post',
-										url:url+'/stockChange',
-										data:{
-											goods:goodsMsg,
-											flag:-1
-										}
-									}).then(res=>{
-										 if(res.data.flag==1){
-											 axios({
-											 	method:'post',
-											 	url:url+'/recordOrders',
-											 	data:{
-											 		uid:_this.uid,
-											 		addr:addrMsg,
-											 		goods:goodsMsg,
-											 		orderId:_this.oid,
-											 		totalPrice:_this.totalPrice
-											 	}
-											 }).then((res)=>{
-											 	let data = res.data
-											 	if(data.code==1){
-											 		mui.toast("提交订单成功，请尽快付款")
-											 		mui.openWindow({
-											 			url:'./pay.html',
-											 			id:'pay.html',
-											 			extras:{
-											 				oid:_this.oid
-											 			}
-											 		})
-													// 刷新购物车
-												   var list = plus.webview.currentWebview().opener();
-												   console.log(list.id);
-												   if(list.id == 'car.html')mui.fire(list, 'refresh')
-												   
-											 	}
-											 })
-										 }
-									})
-									
+							}
+							// 获取结算的商品列表
+							let _this = this
+							for(let item of this.list){
+								let good={}
+								good.gid = item.gid
+								good.num = item.num
+								goodsMsg.push(good)
+							}
+							function getOId(){
+								// let date = new Date()
+								console.log();
+								let oid = Date.now().toString(10).slice(5)+parseInt(Math.random()*100000)
+								return oid
+							}
+							this.oid = getOId()
+							// 查询用户需要的商品是否足够库存
+							axios({
+								method:'post',
+								url:url+'/getStock',
+								data:{
+									goods:goodsMsg
 								}
 							})
-				
+							.then(res=>{
+									let unEnough = []
+									let data = res.data
+									for(let i=0; i<data.list.length;i++){
+										if(data.list[i]<goodsMsg[i].num){
+											unEnough.push(goodsMsg[i].gid)
+										}
+									}
+									if(unEnough.length!=0){
+										mui.alert("商品"+unEnough[0]+"库存不足!请重新选择商品")
+									}else{
+										// 购买商品以后修改商品库存
+										axios({
+											method:'post',
+											url:url+'/stockChange',
+											data:{
+												goods:goodsMsg,
+												flag:-1
+											}
+										}).then(res=>{
+											 if(res.data.flag==1){
+												 axios({
+												 	method:'post',
+												 	url:url+'/recordOrders',
+												 	data:{
+												 		uid:_this.uid,
+												 		addr:addrMsg,
+												 		goods:goodsMsg,
+												 		orderId:_this.oid,
+												 		totalPrice:_this.totalPrice
+												 	}
+												 }).then((res)=>{
+												 	let data = res.data
+												 	if(data.code==1){
+												 		mui.toast("提交订单成功，请尽快付款")
+												 		mui.openWindow({
+												 			url:'./pay.html',
+												 			id:'pay.html',
+												 			extras:{
+												 				oid:_this.oid
+												 			}
+												 		})
+														// 刷新购物车
+													   var list = plus.webview.currentWebview().opener();
+													   console.log(list.id);
+													   if(list.id == 'car.html')mui.fire(list, 'refresh')
+													   
+												 	}
+												 })
+											 }
+										})
+										
+									}
+								})
+						}
 					}
 				},
 				mounted() {
